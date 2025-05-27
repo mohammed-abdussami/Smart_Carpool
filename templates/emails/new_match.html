@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>New Carpool Match</title>
+</head>
+<body>
+    <h2>Hello {{ user.username }},</h2>
+    <p>You have a new carpool match!</p>
+    
+    <h3>Match Details:</h3>
+    <p><strong>User:</strong> {{ match_user.username }}</p>
+    <p><strong>Day:</strong> {{ day }}</p>
+    <p><strong>Time:</strong> {{ start_time }} - {{ end_time }}</p>
+    <p><strong>Route:</strong> {{ origin }} → {{ destination }}</p>
+    <p><strong>Compatibility Score:</strong> {{ score }}</p>
+    
+    <p>Login to your account to view and respond to this match.</p>
+    
+    <p>Best regards,<br>
+    The Carpool Scheduler Team</p>
+</body>
+</html>

@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="text-center">Add Schedule</h3>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="id_day" class="form-label">Day</label>
+                        {{ form.day }}
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label for="id_start_time" class="form-label">Start Time</label>
+                            {{ form.start_time }}
+                        </div>
+                        <div class="col">
+                            <label for="id_end_time" class="form-label">End Time</label>
+                            {{ form.end_time }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_origin" class="form-label">Origin</label>
+                        {{ form.origin }}
+                        <small class="text-muted">Where you're coming from (e.g., Home, Dorm Name)</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_destination" class="form-label">Destination</label>
+                        {{ form.destination }}
+                        <small class="text-muted">Where you're going (e.g., Main Campus, Building Name)</small>
+                    </div>
+                    <div class="mb-3 form-check">
+                        {{ form.flexible }}
+                        <label class="form-check-label" for="id_flexible">My schedule is flexible (±30 minutes)</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Save Schedule</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

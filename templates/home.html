@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 text-center">
+        <h1 class="display-4 mb-4">Smart Carpool Scheduler</h1>
+        <p class="lead">Find the perfect carpool match for your college schedule</p>
+        
+        <div class="row mt-5">
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">For Drivers</h5>
+                        <p class="card-text">Share your ride, save on costs, and meet new people from your campus.</p>
+                        <a href="{% url 'register' %}" class="btn btn-primary">Sign Up as Driver</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">For Passengers</h5>
+                        <p class="card-text">Find reliable rides that match your class schedule and location.</p>
+                        <a href="{% url 'register' %}" class="btn btn-primary">Sign Up as Passenger</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,15 @@
+Hello {{ user.username }},
+
+You have a new carpool match!
+
+Match Details:
+User: {{ match_user.username }}
+Day: {{ day }}
+Time: {{ start_time }} - {{ end_time }}
+Route: {{ origin }} → {{ destination }}
+Compatibility Score: {{ score }}
+
+Login to your account to view and respond to this match.
+
+Best regards,
+FROM MOHAMMED ABDUS SAMI And The Carpool Scheduler Team 

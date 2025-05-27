@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>Incoming Match Requests</h4>
+            </div>
+            <div class="card-body">
+                {% if incoming_matches %}
+                    {% for match in incoming_matches %}
+                        <div class="card match-card mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ match.schedule1.user.username }}</h5>
+                                <p class="card-text">
+                                    <strong>Day:</strong> {{ match.schedule1.get_day_display }}<br>
+                                    <strong>Time:</strong> {{ match.schedule1.start_time|time:"H:i" }} - {{ match.schedule1.end_time|time:"H:i" }}<br>
+                                    <strong>Route:</strong> {{ match.schedule1.origin }} → {{ match.schedule1.destination }}<br>
+                                    <strong>Compatibility Score:</strong> {{ match.score|floatformat:2 }}
+                                </p>
+                                {% if match.status == 'pending' %}
+                                    <div class="d-flex justify-content-between">
+                                        <a href="{% url 'update_match_status' match.id 'accepted' %}" class="btn btn-success">Accept</a>
+                                        <a href="{% url 'update_match_status' match.id 'rejected' %}" class="btn btn-danger">Reject</a>
+                                    </div>
+                                {% else %}
+                                    <span class="badge bg-{% if match.status == 'accepted' %}success{% else %}danger{% endif %}">
+                                        {{ match.get_status_display }}
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p>No incoming match requests.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>Your Match Requests</h4>
+            </div>
+            <div class="card-body">
+                {% if outgoing_matches %}
+                    {% for match in outgoing_matches %}
+                        <div class="card match-card mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ match.schedule2.user.username }}</h5>
+                                <p class="card-text">
+                                    <strong>Day:</strong> {{ match.schedule2.get_day_display }}<br>
+                                    <strong>Time:</strong> {{ match.schedule2.start_time|time:"H:i" }} - {{ match.schedule2.end_time|time:"H:i" }}<br>
+                                    <strong>Route:</strong> {{ match.schedule2.origin }} → {{ match.schedule2.destination }}<br>
+                                    <strong>Compatibility Score:</strong> {{ match.score|floatformat:2 }}
+                                </p>
+                                <span class="badge bg-{% if match.status == 'pending' %}warning{% elif match.status == 'accepted' %}success{% else %}danger{% endif %}">
+                                    {{ match.get_status_display }}
+                                </span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p>You haven't sent any match requests yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
