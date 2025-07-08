@@ -3,6 +3,7 @@ from math import radians, sin, cos, sqrt, atan2
 from django.db import models
 from django.utils import timezone
 from .models import Schedule, Match
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -31,20 +32,25 @@ def calculate_distance(origin1, dest1, origin2, dest2):
         logger.error(f"Error calculating distance: {e}")
         return None
 
+from datetime import datetime
+
 def time_difference(time1, time2):
     """Calculate time difference in minutes"""
-    datetime1 = timezone.now().replace(
-        hour=time1.hour, 
-        minute=time1.minute,
-        second=0,
-        microsecond=0
-    )
-    datetime2 = timezone.now().replace(
-        hour=time2.hour,
-        minute=time2.minute,
-        second=0,
-        microsecond=0
-    )
+    if isinstance(time1, str):
+        try:
+            time1 = datetime.strptime(time1, "%H:%M:%S").time()
+        except ValueError:
+            time1 = datetime.strptime(time1, "%H:%M").time()
+    if isinstance(time2, str):
+        try:
+            time2 = datetime.strptime(time2, "%H:%M:%S").time()
+        except ValueError:
+            time2 = datetime.strptime(time2, "%H:%M").time()
+
+    now = timezone.now()
+    datetime1 = now.replace(hour=time1.hour, minute=time1.minute, second=0, microsecond=0)
+    datetime2 = now.replace(hour=time2.hour, minute=time2.minute, second=0, microsecond=0)
+
     return abs((datetime1 - datetime2).total_seconds() / 60)
 
 def find_matches(schedule):

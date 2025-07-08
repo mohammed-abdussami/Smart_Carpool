@@ -1,4 +1,3 @@
-# scheduler/middleware.py
 import logging
 from django.core.mail import mail_admins
 

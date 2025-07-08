@@ -82,18 +82,29 @@ class UtilityTests(TestCase):
                 break
         self.assertTrue(found)
 
+
 from django.core.mail import send_mail
 
-# Test email sending
-send_mail(
-    'Test Subject - Carpool Admin', 
-    'This confirms your email settings are working!',
-    '160422733078@mjcollege.ac.in',  # Must match EMAIL_HOST_USER
-    ['160422733078@mjcollege.ac.in'],   # Your admin email
-    fail_silently=False,
-)
-User.objects.create_user(
-    username='testadmin',
-    email='test@example.com',
-    password='testpass123'
-)
+class EmailTests(TestCase):
+    def test_email_sending(self):
+        # Test email sending
+        send_mail(
+            'Test Subject - Carpool Admin', 
+            'This confirms your email settings are working!',
+            '160422733078@mjcollege.ac.in',
+            ['160422733078@mjcollege.ac.in'],
+            fail_silently=False,
+        )
+
+class AdminUserCreationTests(TestCase):
+    def setUp(self):
+        # Make sure user is unique for every test run
+        User.objects.filter(username='testadmin').delete()
+        self.admin_user = User.objects.create_user(
+            username='testadmin',
+            email='test@example.com',
+            password='testpass123'
+        )
+    
+    def test_admin_user_created(self):
+        self.assertTrue(User.objects.filter(username='testadmin').exists())

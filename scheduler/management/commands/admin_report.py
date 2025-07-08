@@ -30,3 +30,4 @@ class Command(BaseCommand):
         # Send email
         mail_admins(subject, message)
         self.stdout.write(self.style.SUCCESS('Successfully sent daily report'))
+    

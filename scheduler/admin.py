@@ -4,6 +4,7 @@ from django.conf import settings
 
 # Check admin emails
 print("Admin emails:", settings.ADMINS)
+print("Email host:", settings.EMAIL_HOST) 
 
 # Verify email settings
 print("Email host:", settings.EMAIL_HOST)

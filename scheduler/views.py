@@ -39,6 +39,13 @@ def register_view(request):
         form = UserCreationForm()
     return render(request, 'register.html', {'form': form})
 
+def forms_view(request):
+    # Your form handling logic here
+    return render(request, 'forms_template.html')
+
+def add_schedule_view(request):
+    return render(request, 'scheduler/add_schedule.html')  # ← This shows the template path
+
 def login_view(request):
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
