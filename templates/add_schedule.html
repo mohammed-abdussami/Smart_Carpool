@@ -1,47 +1,164 @@
 {% extends 'base.html' %}
-
+{% block title %}Add Schedule — CarpoolSync{% endblock %}
+{% block styles %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+.sched-card { max-width: 720px; margin: 0 auto; border-radius: 20px; overflow: hidden; box-shadow: 0 8px 40px rgba(0,0,0,.1); }
+.sched-header { background: linear-gradient(135deg,#1a56db,#7c3aed); padding: 1.75rem 2rem; color: #fff; }
+.sched-header h3 { font-weight: 800; margin: 0; }
+.sched-body { padding: 2rem; }
+#routeMap { height: 280px; border-radius: 14px; border: 1.5px solid #e2e8f0; margin-top: .5rem; }
+.autocomplete-list {
+  position: absolute; z-index: 1000; background: #fff;
+  border: 1.5px solid #e2e8f0; border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.1);
+  width: 100%; max-height: 200px; overflow-y: auto;
+}
+.autocomplete-item { padding: .6rem .9rem; cursor: pointer; font-size: .875rem; }
+.autocomplete-item:hover { background: #f0f6ff; }
+.location-wrap { position: relative; }
+</style>
+{% endblock %}
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="text-center">Add Schedule</h3>
-            </div>
-            <div class="card-body">
-                <form method="post">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <label for="id_day" class="form-label">Day</label>
-                        {{ form.day }}
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col">
-                            <label for="id_start_time" class="form-label">Start Time</label>
-                            {{ form.start_time }}
-                        </div>
-                        <div class="col">
-                            <label for="id_end_time" class="form-label">End Time</label>
-                            {{ form.end_time }}
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="id_origin" class="form-label">Origin</label>
-                        {{ form.origin }}
-                        <small class="text-muted">Where you're coming from (e.g., Home, Dorm Name)</small>
-                    </div>
-                    <div class="mb-3">
-                        <label for="id_destination" class="form-label">Destination</label>
-                        {{ form.destination }}
-                        <small class="text-muted">Where you're going (e.g., Main Campus, Building Name)</small>
-                    </div>
-                    <div class="mb-3 form-check">
-                        {{ form.flexible }}
-                        <label class="form-check-label" for="id_flexible">My schedule is flexible (±30 minutes)</label>
-                    </div>
-                    <button type="submit" class="btn btn-primary w-100">Save Schedule</button>
-                </form>
-            </div>
+<div class="container py-3">
+  <div class="sched-card card">
+    <div class="sched-header">
+      <div class="d-flex align-items-center gap-3">
+        <div style="width:48px;height:48px;background:rgba(255,255,255,.2);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;">
+          <i class="bi bi-calendar-plus-fill"></i>
         </div>
+        <div>
+          <h3>Add New Schedule</h3>
+          <p class="mb-0 opacity-75 small">Tell us when and where you travel</p>
+        </div>
+      </div>
     </div>
+    <div class="sched-body">
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="row g-3 mb-3">
+          <div class="col-md-4">
+            <label class="form-label"><i class="bi bi-calendar-week me-1 text-primary"></i>Day</label>
+            {{ form.day }}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label"><i class="bi bi-clock me-1 text-primary"></i>Start Time</label>
+            {{ form.start_time }}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label"><i class="bi bi-clock-fill me-1 text-primary"></i>End Time</label>
+            {{ form.end_time }}
+          </div>
+        </div>
+        <hr style="border-color:#e8edf2;margin:1.5rem 0">
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label"><i class="bi bi-geo text-success me-1"></i>Origin (From)</label>
+            <div class="location-wrap">
+              {{ form.origin }}
+              <div class="autocomplete-list d-none" id="originList"></div>
+            </div>
+            <small class="text-muted">Where you start your journey</small>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label"><i class="bi bi-geo-alt-fill text-danger me-1"></i>Destination (To)</label>
+            <div class="location-wrap">
+              {{ form.destination }}
+              <div class="autocomplete-list d-none" id="destList"></div>
+            </div>
+            <small class="text-muted">Where you're heading</small>
+          </div>
+        </div>
+        <div id="routeMap"></div>
+        <hr style="border-color:#e8edf2;margin:1.5rem 0">
+        <div class="form-check form-switch mb-4">
+          {{ form.flexible }}
+          <label class="form-check-label ms-2 fw-semibold">
+            <i class="bi bi-clock-history me-1 text-warning"></i>My schedule is flexible (±30 minutes)
+          </label>
+          <div class="text-muted small mt-1">Flexible schedules get more matches</div>
+        </div>
+        <div class="d-flex gap-3">
+          <button type="submit" class="btn btn-primary flex-grow-1 py-2 fw-semibold">
+            <i class="bi bi-check-circle me-2"></i>Save Schedule
+          </button>
+          <a href="{% url 'profile' %}" class="btn btn-outline-secondary py-2 px-4">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const map = L.map('routeMap').setView([17.3850, 78.4867], 12);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap', maxZoom: 19
+}).addTo(map);
+
+let originMarker, destMarker, routeLine;
+const greenIcon = L.divIcon({ className:'', html:'<div style="background:#10b981;color:#fff;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:bold;box-shadow:0 2px 6px rgba(0,0,0,.3)">A</div>', iconSize:[28,28], iconAnchor:[14,28] });
+const redIcon   = L.divIcon({ className:'', html:'<div style="background:#ef4444;color:#fff;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:bold;box-shadow:0 2px 6px rgba(0,0,0,.3)">B</div>', iconSize:[28,28], iconAnchor:[14,28] });
+
+function debounce(fn, d=400){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),d); }; }
+
+async function searchPlace(q) {
+  if (q.length < 3) return [];
+  const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&countrycodes=in`, { headers:{'Accept-Language':'en'} });
+  return await r.json();
+}
+
+function showList(results, listEl, onPick) {
+  listEl.innerHTML = ''; listEl.classList.remove('d-none');
+  if (!results.length) { listEl.classList.add('d-none'); return; }
+  results.forEach(r => {
+    const d = document.createElement('div');
+    d.className = 'autocomplete-item';
+    d.textContent = r.display_name.split(',').slice(0,3).join(', ');
+    d.onclick = () => { onPick(r); listEl.classList.add('d-none'); };
+    listEl.appendChild(d);
+  });
+}
+
+function drawRoute() {
+  if (routeLine) map.removeLayer(routeLine);
+  if (originMarker && destMarker) {
+    const o = originMarker.getLatLng(), d = destMarker.getLatLng();
+    routeLine = L.polyline([[o.lat,o.lng],[d.lat,d.lng]], { color:'#1a56db', weight:3, dashArray:'8,6' }).addTo(map);
+    map.fitBounds(routeLine.getBounds(), { padding:[30,30] });
+  }
+}
+
+const originInput = document.getElementById('id_origin');
+const destInput   = document.getElementById('id_destination');
+const originList  = document.getElementById('originList');
+const destList    = document.getElementById('destList');
+
+originInput.addEventListener('input', debounce(async () => {
+  const res = await searchPlace(originInput.value);
+  showList(res, originList, r => {
+    originInput.value = r.display_name.split(',').slice(0,2).join(', ');
+    if (originMarker) map.removeLayer(originMarker);
+    originMarker = L.marker([r.lat, r.lon], {icon: greenIcon}).addTo(map).bindPopup('Origin');
+    drawRoute();
+  });
+}));
+
+destInput.addEventListener('input', debounce(async () => {
+  const res = await searchPlace(destInput.value);
+  showList(res, destList, r => {
+    destInput.value = r.display_name.split(',').slice(0,2).join(', ');
+    if (destMarker) map.removeLayer(destMarker);
+    destMarker = L.marker([r.lat, r.lon], {icon: redIcon}).addTo(map).bindPopup('Destination');
+    drawRoute();
+  });
+}));
+
+document.addEventListener('click', e => {
+  if (!originInput.contains(e.target)) originList.classList.add('d-none');
+  if (!destInput.contains(e.target))   destList.classList.add('d-none');
+});
+</script>
 {% endblock %}

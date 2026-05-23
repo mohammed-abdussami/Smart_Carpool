@@ -1,72 +1,434 @@
 {% extends 'base.html' %}
 
+{% block title %}My Matches — CarpoolSync{% endblock %}
+
+{% block styles %}
+<style>
+.matches-hero {
+    background: linear-gradient(135deg,#1a56db,#7c3aed);
+    border-radius: 20px;
+    padding: 1.75rem 2rem;
+    color: #fff;
+    margin-bottom: 1.5rem;
+}
+
+.match-card {
+    background: #fff;
+    border-radius: 16px;
+    border: none;
+    box-shadow: 0 2px 12px rgba(0,0,0,.07);
+    margin-bottom: 1rem;
+    transition: all .25s;
+    overflow: hidden;
+}
+
+.match-card:hover {
+    box-shadow: 0 6px 28px rgba(0,0,0,.12);
+    transform: translateY(-2px);
+}
+
+.match-card-header {
+    padding: .85rem 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #f0f4f8;
+}
+
+.match-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.incoming .match-avatar {
+    background: linear-gradient(135deg,#10b981,#0ea472);
+}
+
+.outgoing .match-avatar {
+    background: linear-gradient(135deg,#1a56db,#7c3aed);
+}
+
+.match-body {
+    padding: 1rem 1.2rem;
+}
+
+.route-row {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    font-size: .875rem;
+    color: #374151;
+    margin-bottom: .4rem;
+}
+
+.score-bar {
+    height: 4px;
+    background: #e8edf2;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: .5rem;
+}
+
+.score-fill {
+    height: 100%;
+    background: linear-gradient(90deg,#1a56db,#7c3aed);
+    border-radius: 2px;
+}
+
+.match-actions {
+    padding: .85rem 1.2rem;
+    background: #fafbfc;
+    border-top: 1px solid #f0f4f8;
+    display: flex;
+    gap: .5rem;
+    flex-wrap: wrap;
+}
+
+.status-badge {
+    font-size: .75rem;
+    font-weight: 700;
+    padding: .3em .75em;
+    border-radius: 20px;
+}
+
+.status-pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-accepted {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-rejected {
+    background: #fee2e2;
+    color: #7f1d1d;
+}
+
+.empty-state {
+    border-radius: 16px;
+    border: none;
+    text-align: center;
+    color: #6b7280;
+}
+
+.empty-state i {
+    font-size: 2rem;
+    margin-bottom: .75rem;
+    display: block;
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row">
-    <div class="col-md-6">
-        <div class="card mb-4">
-            <div class="card-header">
-                <h4>Incoming Match Requests</h4>
+<div class="container py-2">
+
+    <!-- Hero Section -->
+    <div class="matches-hero d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div>
+            <h2 class="fw-800 mb-1">
+                <i class="bi bi-people-fill me-2"></i>
+                Your Carpool Matches
+            </h2>
+            <p class="mb-0 opacity-75 small">
+                Review, accept, reject or chat with potential carpool partners
+            </p>
+        </div>
+
+        <div class="d-flex gap-4">
+            <div class="text-center">
+                <div style="font-size:1.6rem;font-weight:800">
+                    {{ incoming_matches|length }}
+                </div>
+                <div style="font-size:.75rem;opacity:.75">Incoming</div>
             </div>
-            <div class="card-body">
-                {% if incoming_matches %}
-                    {% for match in incoming_matches %}
-                        <div class="card match-card mb-3">
-                            <div class="card-body">
-                                <h5 class="card-title">{{ match.schedule1.user.username }}</h5>
-                                <p class="card-text">
-                                    <strong>Day:</strong> {{ match.schedule1.get_day_display }}<br>
-                                    <strong>Time:</strong> {{ match.schedule1.start_time|time:"H:i" }} - {{ match.schedule1.end_time|time:"H:i" }}<br>
-                                    <strong>Route:</strong> {{ match.schedule1.origin }} → {{ match.schedule1.destination }}<br>
-                                    <strong>Compatibility Score:</strong> {{ match.score|floatformat:2 }}
-                                </p>
-                                {% if match.status == 'pending' %}
-                                    <div class="d-flex justify-content-between">
-                                        <a href="{% url 'update_match_status' match.id 'accepted' %}" class="btn btn-success">Accept</a>
-                                        <a href="{% url 'update_match_status' match.id 'rejected' %}" class="btn btn-danger">Reject</a>
-                                        <a href="{% url 'chat_room' match.id %}" class="btn btn-info">Chat</a>
-                                        <a href="{{ SITE_URL }}{% url 'matches' %}" style="text-decoration: none; color: blue;">View Match</a>
-                                    </div>
-                                {% else %}
-                                    <span class="badge bg-{% if match.status == 'accepted' %}success{% else %}danger{% endif %}">
-                                        {{ match.get_status_display }}
-                                    </span>
-                                {% endif %}
-                            </div>
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <p>No incoming match requests.</p>
-                {% endif %}
+
+            <div class="text-center">
+                <div style="font-size:1.6rem;font-weight:800">
+                    {{ outgoing_matches|length }}
+                </div>
+                <div style="font-size:.75rem;opacity:.75">Outgoing</div>
             </div>
         </div>
     </div>
-    <div class="col-md-6">
-        <div class="card mb-4">
-            <div class="card-header">
-                <h4>Your Match Requests</h4>
-            </div>
-            <div class="card-body">
-                {% if outgoing_matches %}
-                    {% for match in outgoing_matches %}
-                        <div class="card match-card mb-3">
-                            <div class="card-body">
-                                <h5 class="card-title">{{ match.schedule2.user.username }}</h5>
-                                <p class="card-text">
-                                    <strong>Day:</strong> {{ match.schedule2.get_day_display }}<br>
-                                    <strong>Time:</strong> {{ match.schedule2.start_time|time:"H:i" }} - {{ match.schedule2.end_time|time:"H:i" }}<br>
-                                    <strong>Route:</strong> {{ match.schedule2.origin }} → {{ match.schedule2.destination }}<br>
-                                    <strong>Compatibility Score:</strong> {{ match.score|floatformat:2 }}
-                                </p>
-                                <span class="badge bg-{% if match.status == 'pending' %}warning{% elif match.status == 'accepted' %}success{% else %}danger{% endif %}">
-                                    {{ match.get_status_display }}
-                                </span>
+
+    <div class="row g-4">
+
+        <!-- Incoming Requests -->
+        <div class="col-lg-6">
+            <h5 class="fw-bold mb-3">
+                <i class="bi bi-arrow-down-circle text-success me-2"></i>
+                Incoming Requests
+            </h5>
+
+            {% if incoming_matches %}
+
+                {% for match in incoming_matches %}
+
+                <div class="match-card incoming">
+
+                    <div class="match-card-header">
+
+                        <div class="d-flex align-items-center gap-2">
+
+                            <div class="match-avatar">
+                                {{ match.schedule1.user.email.0|upper }}
                             </div>
+
+                            <div>
+                                <div class="fw-semibold" style="font-size:.9rem">
+                                    {{ match.schedule1.user.email|truncatechars:28 }}
+                                </div>
+
+                                <div class="text-muted" style="font-size:.75rem">
+                                    {{ match.created_at|date:"M d, Y" }}
+                                </div>
+                            </div>
+
                         </div>
-                    {% endfor %}
-                {% else %}
-                    <p>You haven't sent any match requests yet.</p>
-                {% endif %}
+
+                        <span class="status-badge status-{{ match.status }}">
+                            {{ match.get_status_display }}
+                        </span>
+
+                    </div>
+
+                    <div class="match-body">
+
+                        <div class="route-row">
+                            <i class="bi bi-calendar3 text-muted"></i>
+                            <b>{{ match.schedule1.get_day_display }}</b>
+                        </div>
+
+                        <div class="route-row">
+                            <i class="bi bi-clock text-muted"></i>
+                            {{ match.schedule1.start_time|time:"H:i" }}
+                            –
+                            {{ match.schedule1.end_time|time:"H:i" }}
+                        </div>
+
+                        <div class="route-row">
+                            <i class="bi bi-geo text-muted"></i>
+                            {{ match.schedule1.origin }}
+                            →
+                            {{ match.schedule1.destination }}
+                        </div>
+
+                        <div class="d-flex align-items-center gap-2 mt-2">
+
+                            <small class="text-muted">Score</small>
+
+                            <div class="score-bar flex-grow-1">
+
+                                {% if match.score <= 5 %}
+                                    <div class="score-fill" style="width:85%"></div>
+
+                                {% elif match.score <= 15 %}
+                                    <div class="score-fill" style="width:60%"></div>
+
+                                {% else %}
+                                    <div class="score-fill" style="width:35%"></div>
+                                {% endif %}
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    {% if match.status == 'pending' %}
+
+                    <div class="match-actions">
+
+                        <a href="{% url 'update_match_status' match.id 'accepted' %}"
+                           class="btn btn-success btn-sm px-3"
+                           onclick="return confirm('Accept this match?')">
+
+                            <i class="bi bi-check-lg me-1"></i>
+                            Accept
+
+                        </a>
+
+                        <a href="{% url 'update_match_status' match.id 'rejected' %}"
+                           class="btn btn-outline-danger btn-sm px-3"
+                           onclick="return confirm('Reject this match?')">
+
+                            <i class="bi bi-x-lg me-1"></i>
+                            Reject
+
+                        </a>
+
+                    </div>
+
+                    {% elif match.status == 'accepted' %}
+
+                    <div class="match-actions">
+
+                        <a href="{% url 'chat_room' match.id %}"
+                           class="btn btn-primary btn-sm px-3">
+
+                            <i class="bi bi-chat-dots-fill me-1"></i>
+                            Open Chat
+
+                        </a>
+
+                    </div>
+
+                    {% endif %}
+
+                </div>
+
+                {% endfor %}
+
+            {% else %}
+
+            <div class="empty-state card py-4">
+                <i class="bi bi-inbox"></i>
+
+                <p class="fw-semibold mb-0">
+                    No incoming requests
+                </p>
+
+                <p class="small text-muted">
+                    Others will appear here when they match your schedule
+                </p>
             </div>
+
+            {% endif %}
+        </div>
+
+        <!-- Outgoing Requests -->
+        <div class="col-lg-6">
+
+            <h5 class="fw-bold mb-3">
+                <i class="bi bi-arrow-up-circle text-primary me-2"></i>
+                Your Requests
+            </h5>
+
+            {% if outgoing_matches %}
+
+                {% for match in outgoing_matches %}
+
+                <div class="match-card outgoing">
+
+                    <div class="match-card-header">
+
+                        <div class="d-flex align-items-center gap-2">
+
+                            <div class="match-avatar">
+                                {{ match.schedule2.user.email.0|upper }}
+                            </div>
+
+                            <div>
+
+                                <div class="fw-semibold" style="font-size:.9rem">
+                                    {{ match.schedule2.user.email|truncatechars:28 }}
+                                </div>
+
+                                <div class="text-muted" style="font-size:.75rem">
+                                    {{ match.created_at|date:"M d, Y" }}
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <span class="status-badge status-{{ match.status }}">
+                            {{ match.get_status_display }}
+                        </span>
+
+                    </div>
+
+                    <div class="match-body">
+
+                        <div class="route-row">
+                            <i class="bi bi-calendar3 text-muted"></i>
+                            <b>{{ match.schedule2.get_day_display }}</b>
+                        </div>
+
+                        <div class="route-row">
+                            <i class="bi bi-clock text-muted"></i>
+                            {{ match.schedule2.start_time|time:"H:i" }}
+                            –
+                            {{ match.schedule2.end_time|time:"H:i" }}
+                        </div>
+
+                        <div class="route-row">
+                            <i class="bi bi-geo text-muted"></i>
+                            {{ match.schedule2.origin }}
+                            →
+                            {{ match.schedule2.destination }}
+                        </div>
+
+                        <div class="d-flex align-items-center gap-2 mt-2">
+
+                            <small class="text-muted">Score</small>
+
+                            <div class="score-bar flex-grow-1">
+
+                                {% if match.score <= 5 %}
+                                    <div class="score-fill" style="width:85%"></div>
+
+                                {% elif match.score <= 15 %}
+                                    <div class="score-fill" style="width:60%"></div>
+
+                                {% else %}
+                                    <div class="score-fill" style="width:35%"></div>
+                                {% endif %}
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    {% if match.status == 'accepted' %}
+
+                    <div class="match-actions">
+
+                        <a href="{% url 'chat_room' match.id %}"
+                           class="btn btn-primary btn-sm px-3">
+
+                            <i class="bi bi-chat-dots-fill me-1"></i>
+                            Open Chat
+
+                        </a>
+
+                    </div>
+
+                    {% endif %}
+
+                </div>
+
+                {% endfor %}
+
+            {% else %}
+
+            <div class="empty-state card py-4">
+
+                <i class="bi bi-send"></i>
+
+                <p class="fw-semibold mb-0">
+                    No outgoing requests yet
+                </p>
+
+                <p class="small text-muted">
+                    Add schedules to automatically find matches
+                </p>
+
+            </div>
+
+            {% endif %}
+
         </div>
     </div>
 </div>

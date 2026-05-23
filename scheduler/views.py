@@ -1,82 +1,77 @@
-from django.shortcuts import render, redirect
+import logging
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib import messages
+from django.db.models import Q
+from django.http import JsonResponse
+
+from .forms import EmailUserCreationForm, EmailAuthenticationForm, ProfileForm, ScheduleForm
 from .models import UserProfile, Schedule, Match, ChatRoom, ChatMessage
 from .utils import create_matches_for_user
-from .forms import ProfileForm, ScheduleForm
-from django.db.models import Q
-import logging
 
 logger = logging.getLogger(__name__)
-
-# Constants
 ALLOWED_MATCH_STATUSES = ['accepted', 'rejected', 'pending']
 
-# Utility Functions
+
 def get_user_matches(user):
-    """DRY helper to get matches for a user"""
     return Match.objects.filter(
         Q(schedule1__user=user) | Q(schedule2__user=user)
     )
 
-# Views
+
 def home(request):
     if request.user.is_authenticated:
         return redirect('profile')
     return render(request, 'home.html')
 
+
 def register_view(request):
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+        form = EmailUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            UserProfile.objects.create(user=user)
             login(request, user)
+            messages.success(request, 'Welcome! Your account has been created.')
             return redirect('profile')
     else:
-        form = UserCreationForm()
+        form = EmailUserCreationForm()
     return render(request, 'register.html', {'form': form})
 
-def forms_view(request):
-    # Your form handling logic here
-    return render(request, 'forms_template.html')
-
-def add_schedule_view(request):
-    return render(request, 'scheduler/add_schedule.html')  # ← This shows the template path
 
 def login_view(request):
+    if request.user.is_authenticated:
+        return redirect('profile')
     if request.method == 'POST':
-        form = AuthenticationForm(request, data=request.POST)
+        form = EmailAuthenticationForm(request, data=request.POST)
         if form.is_valid():
-            username = form.cleaned_data.get('username')
+            email = form.cleaned_data.get('username')
             password = form.cleaned_data.get('password')
-            user = authenticate(username=username, password=password)
+            user = authenticate(request, email=email, password=password)
             if user is not None:
                 login(request, user)
+                messages.success(request, 'Welcome back!')
                 return redirect('profile')
-        messages.error(request, 'Invalid username or password.')
+            else:
+                messages.error(request, 'Invalid email or password.')
     else:
-        form = AuthenticationForm()
+        form = EmailAuthenticationForm()
     return render(request, 'login.html', {'form': form})
+
 
 @login_required
 def logout_view(request):
     logout(request)
+    messages.info(request, 'You have been logged out.')
     return redirect('home')
 
-@login_required
-def profile_view(request):
-    try:
-        profile = request.user.userprofile
-    except UserProfile.DoesNotExist:
-        logger.info(f'Creating UserProfile for new user: {request.user.username}')
-        profile = UserProfile.objects.create(user=request.user)
 
-    schedules = Schedule.objects.filter(user=request.user)
+@login_required(login_url='login')
+def profile_view(request):
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    schedules = Schedule.objects.filter(user=request.user).order_by('day', 'start_time')
     matches = get_user_matches(request.user)
-    
+
     if request.method == 'POST':
         form = ProfileForm(request.POST, instance=profile)
         if form.is_valid():
@@ -86,15 +81,15 @@ def profile_view(request):
     else:
         form = ProfileForm(instance=profile)
 
-    context = {
+    return render(request, 'profile.html', {
         'profile': profile,
         'schedules': schedules,
         'matches': matches,
         'form': form,
-    }
-    return render(request, 'profile.html', context)
+    })
 
-@login_required
+
+@login_required(login_url='login')
 def add_schedule(request):
     if request.method == 'POST':
         form = ScheduleForm(request.POST)
@@ -103,70 +98,90 @@ def add_schedule(request):
             schedule.user = request.user
             schedule.save()
             create_matches_for_user(request.user)
-            messages.success(request, 'Schedule added successfully!')
+            messages.success(request, 'Schedule added! Checking for matches...')
             return redirect('profile')
     else:
         form = ScheduleForm()
     return render(request, 'add_schedule.html', {'form': form})
 
+
+@login_required(login_url='login')
+def delete_schedule(request, schedule_id):
+    schedule = get_object_or_404(Schedule, id=schedule_id, user=request.user)
+    schedule.delete()
+    messages.success(request, 'Schedule deleted.')
+    return redirect('profile')
+
+
 @login_required
 def matches_view(request):
     matches = get_user_matches(request.user).select_related(
-        'schedule1', 'schedule2', 'schedule1__user', 'schedule2__user'
-    )
+        'schedule1__user', 'schedule2__user'
+    ).order_by('-created_at')
 
-    incoming = []
-    outgoing = []
-    
+    incoming, outgoing = [], []
     for match in matches:
         if match.schedule2.user == request.user:
             incoming.append(match)
         else:
             outgoing.append(match)
 
-    context = {
+    return render(request, 'matches.html', {
         'incoming_matches': incoming,
         'outgoing_matches': outgoing,
-    }
-    return render(request, 'matches.html', context)
-
-@login_required
-def chat_room(request, match_id):
-    match = Match.objects.filter(
-        id=match_id,
-        status='accepted'
-    ).filter(
-        Q(schedule1__user=request.user) | Q(schedule2__user=request.user)
-    ).first()
-
-    if not match:
-        messages.error(request, 'Chat room not found or access denied.')
-        return redirect('matches')
-    
-    room, created = ChatRoom.objects.get_or_create(match=match)
-    other_user = match.schedule2.user if match.schedule1.user == request.user else match.schedule1.user
-    messages = room.messages.all().order_by('timestamp')[:50]
-    
-    return render(request, 'chat_room.html', {
-        'room': room,
-        'other_user': other_user,
-        'messages': messages,
     })
+
 
 @login_required
 def update_match_status(request, match_id, status):
     if status not in ALLOWED_MATCH_STATUSES:
         messages.error(request, 'Invalid status.')
         return redirect('matches')
-
-    try:
-        match = Match.objects.get(id=match_id)
-        if match.schedule2.user == request.user or match.schedule1.user == request.user:
-            match.status = status
-            match.save()
-            messages.success(request, f'Match {status} successfully!')
-        else:
-            messages.error(request, 'You cannot update this match.')
-    except Match.DoesNotExist:
-        messages.error(request, 'Match not found.')
+    match = get_object_or_404(Match, id=match_id)
+    if match.schedule1.user == request.user or match.schedule2.user == request.user:
+        match.status = status
+        match.save()
+        messages.success(request, f'Match {status}!')
+    else:
+        messages.error(request, 'Permission denied.')
     return redirect('matches')
+
+
+@login_required
+def chat_room(request, match_id):
+    match = get_object_or_404(
+        Match.objects.filter(
+            Q(schedule1__user=request.user) | Q(schedule2__user=request.user),
+            status='accepted'
+        ),
+        id=match_id
+    )
+    room, _ = ChatRoom.objects.get_or_create(match=match)
+    other_user = (
+        match.schedule2.user
+        if match.schedule1.user == request.user
+        else match.schedule1.user
+    )
+
+    if request.method == 'POST':
+        msg_text = request.POST.get('message', '').strip()
+        if msg_text:
+            msg = ChatMessage.objects.create(
+                room=room, sender=request.user, message=msg_text
+            )
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': True, 'message': {
+                    'sender': request.user.email.split('@')[0],
+                    'text': msg.message,
+                    'timestamp': msg.timestamp.strftime('%H:%M'),
+                    'is_sender': True,
+                }})
+        return redirect('chat_room', match_id=match_id)
+
+    chat_messages = room.messages.select_related('sender').order_by('timestamp')
+    return render(request, 'chat_room.html', {
+        'room': room,
+        'other_user': other_user,
+        'chat_messages': chat_messages,
+        'match': match,
+    })

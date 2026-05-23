@@ -1,5 +1,19 @@
 from django import forms
 from .models import UserProfile, Schedule
+from django.contrib.auth import get_user_model
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+
+User = get_user_model()
+
+class EmailUserCreationForm(UserCreationForm):
+    class Meta:
+        model = User
+        fields = ('email', 'password1', 'password2')
+
+class EmailAuthenticationForm(AuthenticationForm):
+    username = forms.EmailField(label='Email')
+    widget=forms.EmailInput(attrs={'class': 'form-control'})
+    
 
 class ProfileForm(forms.ModelForm):
     class Meta:

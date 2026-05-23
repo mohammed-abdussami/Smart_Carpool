@@ -1,72 +1,167 @@
 {% extends 'base.html' %}
-
+{% block title %}My Profile — CarpoolSync{% endblock %}
+{% block styles %}
+<style>
+.profile-header { background: linear-gradient(135deg,#1a56db,#7c3aed); border-radius: 20px; padding: 2rem; color: #fff; margin-bottom: 1.5rem; }
+.profile-avatar { width: 72px; height: 72px; background: rgba(255,255,255,.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; border: 3px solid rgba(255,255,255,.4); }
+.info-badge { display: inline-flex; align-items: center; gap: .4rem; background: rgba(255,255,255,.15); border-radius: 8px; padding: .3rem .75rem; font-size: .8rem; font-weight: 600; }
+.day-pill { display: inline-block; background: linear-gradient(135deg,#1a56db,#7c3aed); color: #fff; border-radius: 8px; padding: .2rem .65rem; font-size: .78rem; font-weight: 700; }
+.time-chip { background: #f0f4f8; border-radius: 8px; padding: .2rem .6rem; font-size: .82rem; font-weight: 600; font-family: monospace; }
+.flexible-yes { background: #ecfdf5; color: #065f46; border-radius: 8px; padding: .2rem .6rem; font-size: .78rem; font-weight: 700; }
+.flexible-no  { background: #f3f4f6; color: #6b7280; border-radius: 8px; padding: .2rem .6rem; font-size: .78rem; font-weight: 700; }
+.match-mini { background: #f0f6ff; border-radius: 12px; padding: 1rem; border-left: 3px solid #1a56db; margin-bottom: .75rem; transition: all .2s; }
+.match-mini:hover { background: #e0ecff; transform: translateX(3px); }
+.status-pending  { background: #fef3c7; color: #92400e; border-radius: 8px; padding: .25em .6em; font-size: .75rem; font-weight: 700; }
+.status-accepted { background: #d1fae5; color: #065f46; border-radius: 8px; padding: .25em .6em; font-size: .75rem; font-weight: 700; }
+.status-rejected { background: #fee2e2; color: #7f1d1d; border-radius: 8px; padding: .25em .6em; font-size: .75rem; font-weight: 700; }
+</style>
+{% endblock %}
 {% block content %}
-<div class="row">
-    <div class="col-md-4">
-        <div class="card mb-4">
-            <div class="card-header">
-                <h4>Your Profile</h4>
-            </div>
-            <div class="card-body">
-                <form method="post">
-                    {% csrf_token %}
-                    {{ form.as_p }}
-                    <button type="submit" class="btn btn-primary">Update Profile</button>
-                </form>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-8">
-        <div class="card mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h4>Your Schedules</h4>
-                <a href="{% url 'add_schedule' %}" class="btn btn-success btn-sm">Add Schedule</a>
-            </div>
-            <div class="card-body">
-                {% if schedules %}
-                    <div class="table-responsive">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Day</th>
-                                    <th>Time</th>
-                                    <th>From</th>
-                                    <th>To</th>
-                                    <th>Flexible</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for schedule in schedules %}
-                                    <tr>
-                                        <td>{{ schedule.get_day_display }}</td>
-                                        <td>{{ schedule.start_time|time:"H:i" }} - {{ schedule.end_time|time:"H:i" }}</td>
-                                        <td>{{ schedule.origin }}</td>
-                                        <td>{{ schedule.destination }}</td>
-                                        <td>{% if schedule.flexible %}Yes{% else %}No{% endif %}</td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
-                    <p>No schedules added yet.</p>
-                {% endif %}
-            </div>
-        </div>
+<div class="container py-2">
 
-        <div class="card">
-            <div class="card-header">
-                <h4>Your Matches</h4>
-            </div>
-            <div class="card-body">
-                {% if matches %}
-                    <p>You have {{ matches.count }} potential matches.</p>
-                    <a href="{% url 'matches' %}" class="btn btn-primary">View All Matches</a>
-                {% else %}
-                    <p>No matches found yet. Add more schedules to find potential carpool partners.</p>
-                {% endif %}
-            </div>
-        </div>
+  <div class="profile-header d-flex align-items-center gap-3 flex-wrap">
+    <div class="profile-avatar"><i class="bi bi-person-fill"></i></div>
+    <div class="flex-grow-1">
+      <div style="font-weight:800;font-size:1.3rem">{{ user.email|truncatechars:35 }}</div>
+      <div style="font-size:.9rem;color:rgba(255,255,255,.8)">{{ user.email }}</div>
+      <div class="d-flex gap-2 mt-2 flex-wrap">
+        {% if profile.car_available %}
+          <span class="info-badge"><i class="bi bi-car-front-fill"></i> Driver — {{ profile.car_capacity }} seats</span>
+          {% if profile.license_plate %}
+          <span class="info-badge"><i class="bi bi-card-text"></i> {{ profile.license_plate }}</span>
+          {% endif %}
+        {% else %}
+          <span class="info-badge"><i class="bi bi-person-walking"></i> Passenger</span>
+        {% endif %}
+        {% if profile.phone_number %}
+          <span class="info-badge"><i class="bi bi-telephone-fill"></i> {{ profile.phone_number }}</span>
+        {% endif %}
+      </div>
     </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-4">
+      <div class="card h-100">
+        <div class="card-header"><i class="bi bi-pencil-fill me-2 text-primary"></i>Edit Profile</div>
+        <div class="card-body p-3">
+          <form method="post" novalidate>
+            {% csrf_token %}
+            <div class="mb-3">
+              <label class="form-label">Phone Number</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light"><i class="bi bi-telephone text-muted"></i></span>
+                {{ form.phone_number }}
+              </div>
+            </div>
+            <div class="mb-3">
+              <div class="form-check form-switch">
+                {{ form.car_available }}
+                <label class="form-check-label fw-semibold ms-2">
+                  <i class="bi bi-car-front me-1 text-primary"></i>I have a car
+                </label>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Car Capacity (seats)</label>
+              {{ form.car_capacity }}
+            </div>
+            <div class="mb-4">
+              <label class="form-label">License Plate</label>
+              {{ form.license_plate }}
+            </div>
+            <button type="submit" class="btn btn-primary w-100">
+              <i class="bi bi-check-lg me-1"></i>Save Changes
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-8">
+      <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span><i class="bi bi-calendar3 me-2 text-primary"></i>Your Schedules</span>
+          <a href="{% url 'add_schedule' %}" class="btn btn-success btn-sm px-3">
+            <i class="bi bi-plus-lg me-1"></i>Add Schedule
+          </a>
+        </div>
+        <div class="card-body p-0">
+          {% if schedules %}
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th class="ps-3">Day</th><th>Time</th><th>From</th><th>To</th><th>Flex</th><th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for s in schedules %}
+                <tr>
+                  <td class="ps-3"><span class="day-pill">{{ s.get_day_display }}</span></td>
+                  <td><span class="time-chip">{{ s.start_time|time:"H:i" }}–{{ s.end_time|time:"H:i" }}</span></td>
+                  <td>{{ s.origin }}</td>
+                  <td>{{ s.destination }}</td>
+                  <td>
+                    {% if s.flexible %}<span class="flexible-yes">Flex</span>
+                    {% else %}<span class="flexible-no">Fixed</span>{% endif %}
+                  </td>
+                  <td>
+                    <a href="{% url 'delete_schedule' s.id %}"
+                       class="btn btn-sm btn-outline-danger py-0 px-2"
+                       onclick="return confirm('Delete this schedule?')">
+                      <i class="bi bi-trash3"></i>
+                    </a>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="empty-state">
+            <i class="bi bi-calendar-plus"></i>
+            <p class="mb-2 fw-semibold">No schedules yet</p>
+            <a href="{% url 'add_schedule' %}" class="btn btn-primary btn-sm">Add your first schedule</a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span><i class="bi bi-people-fill me-2 text-primary"></i>Your Matches</span>
+          {% if matches %}<a href="{% url 'matches' %}" class="btn btn-outline-primary btn-sm px-3">View All</a>{% endif %}
+        </div>
+        <div class="card-body">
+          {% if matches %}
+            {% for match in matches|slice:":4" %}
+            <div class="match-mini d-flex align-items-center justify-content-between gap-2 flex-wrap">
+              <div>
+                <div class="fw-semibold small">
+                  {% if match.schedule1.user == user %}
+                    → {{ match.schedule2.user.email|truncatechars:28 }}
+                  {% else %}
+                    ← {{ match.schedule1.user.email|truncatechars:28 }}
+                  {% endif %}
+                </div>
+                <div class="text-muted" style="font-size:.8rem">
+                  {{ match.schedule1.get_day_display }} · Score: {{ match.score|floatformat:1 }}
+                </div>
+              </div>
+              <span class="status-{{ match.status }}">{{ match.get_status_display }}</span>
+            </div>
+            {% endfor %}
+          {% else %}
+          <div class="empty-state">
+            <i class="bi bi-people"></i>
+            <p class="mb-1 fw-semibold">No matches yet</p>
+            <p class="small text-muted">Add more schedules to find carpool partners</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}

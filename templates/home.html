@@ -1,31 +1,384 @@
 {% extends 'base.html' %}
+{% load static %}
+{% block title %}Smart Carpool Scheduler — Find Your Ride{% endblock %}
+
+{% block styles %}
+<style>
+.hero {
+  background: linear-gradient(135deg, #1a56db 0%, #7c3aed 100%);
+  min-height: 92vh; display: flex; align-items: center;
+  position: relative; overflow: hidden;
+  margin-top: -2rem; padding: 5rem 0 4rem;
+}
+.hero::before {
+  content: ''; position: absolute; inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+.hero-content { position: relative; z-index: 2; }
+.hero-badge {
+  display: inline-flex; align-items: center; gap: .5rem;
+  background: rgba(255,255,255,.15); color: #fff;
+  border: 1px solid rgba(255,255,255,.25);
+  border-radius: 50px; padding: .35rem 1rem;
+  font-size: .8rem; font-weight: 600; margin-bottom: 1.5rem;
+}
+.hero h1 {
+  font-size: clamp(2.2rem, 5vw, 3.5rem);
+  font-weight: 800; color: #fff; line-height: 1.15; margin-bottom: 1.2rem;
+}
+.hero h1 span {
+  background: linear-gradient(135deg,#fbbf24,#f59e0b);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.hero p { font-size: 1.1rem; color: rgba(255,255,255,.85); max-width: 520px; margin-bottom: 2rem; line-height: 1.7; }
+.hero-btns { display: flex; gap: .75rem; flex-wrap: wrap; }
+.btn-hero-primary {
+  background: #fff; color: #1a56db; font-weight: 700;
+  padding: .75rem 1.75rem; border-radius: 12px; border: none;
+  font-size: .95rem; transition: all .2s; text-decoration: none; display: inline-flex; align-items: center;
+}
+.btn-hero-primary:hover { background: #f0f6ff; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.15); color: #1a56db; }
+.btn-hero-outline {
+  background: rgba(255,255,255,.12); color: #fff; font-weight: 600;
+  padding: .75rem 1.75rem; border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.3); font-size: .95rem;
+  transition: all .2s; text-decoration: none; display: inline-flex; align-items: center;
+}
+.btn-hero-outline:hover { background: rgba(255,255,255,.2); color: #fff; transform: translateY(-2px); }
+.hero-stats { display: flex; gap: 2rem; margin-top: 2.5rem; flex-wrap: wrap; }
+.stat-num { font-size: 1.6rem; font-weight: 800; color: #fff; line-height: 1; }
+.stat-label { font-size: .78rem; color: rgba(255,255,255,.7); font-weight: 500; margin-top: .2rem; }
+
+/* Role Cards */
+.role-card {
+  background: #fff; border-radius: 20px; padding: 2rem;
+  box-shadow: 0 4px 32px rgba(0,0,0,.08);
+  transition: all .3s; height: 100%; position: relative; overflow: hidden; border: none;
+}
+.role-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; }
+.role-card.driver::before  { background: linear-gradient(90deg,#1a56db,#7c3aed); }
+.role-card.passenger::before { background: linear-gradient(90deg,#10b981,#0ea472); }
+.role-card:hover { transform: translateY(-6px); box-shadow: 0 12px 48px rgba(0,0,0,.13); }
+.role-icon {
+  width: 60px; height: 60px; border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.6rem; margin-bottom: 1.25rem;
+}
+.driver .role-icon   { background: #eff6ff; color: #1a56db; }
+.passenger .role-icon { background: #ecfdf5; color: #10b981; }
+.role-card h3  { font-size: 1.2rem; font-weight: 700; margin-bottom: .6rem; }
+.role-card p   { font-size: .9rem; color: #6b7280; line-height: 1.65; margin-bottom: 1.5rem; }
+.role-features { list-style: none; padding: 0; margin-bottom: 1.75rem; }
+.role-features li { font-size: .85rem; color: #374151; padding: .3rem 0; display: flex; align-items: center; gap: .5rem; }
+.role-features li i { color: #10b981; }
+.btn-driver    { background: linear-gradient(135deg,#1a56db,#7c3aed); border: none; color: #fff; }
+.btn-passenger { background: linear-gradient(135deg,#10b981,#0ea472); border: none; color: #fff; }
+
+/* How it works */
+.how-section { padding: 5rem 0; background: #fff; }
+.how-section .section-heading { text-align: center; margin-bottom: 3.5rem; }
+.how-section .section-heading h2 { font-size: 2rem; font-weight: 800; }
+.how-section .section-heading p  { color: #6b7280; }
+.step-card { text-align: center; padding: 1.5rem; }
+.step-num {
+  width: 52px; height: 52px; border-radius: 50%;
+  background: linear-gradient(135deg,#1a56db,#7c3aed);
+  color: #fff; font-size: 1.3rem; font-weight: 800;
+  display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem;
+}
+.step-card h5 { font-weight: 700; margin-bottom: .5rem; }
+.step-card p  { font-size: .875rem; color: #6b7280; line-height: 1.6; }
+.step-connector { display: flex; align-items: center; justify-content: center; padding-top: 1.5rem; color: #cbd5e1; font-size: 1.5rem; }
+
+/* Map */
+.map-section { padding: 5rem 0; background: #f0f4f8; }
+.map-section .section-heading { text-align: center; margin-bottom: 2.5rem; }
+.map-section .section-heading h2 { font-size: 2rem; font-weight: 800; }
+#homeMap { height: 420px; border-radius: 20px; box-shadow: 0 4px 32px rgba(0,0,0,.1); }
+
+/* Developer Section */
+.dev-section { padding: 5rem 0; background: #fff; }
+.dev-section .section-heading { text-align: center; margin-bottom: 3rem; }
+.dev-section .section-heading h2 { font-size: 2rem; font-weight: 800; color: #1a202c; }
+.dev-section .section-heading p  { color: #6b7280; margin-top: .5rem; }
+.dev-card {
+  background: #fff; border-radius: 24px; padding: 2.5rem 2rem;
+  text-align: center; box-shadow: 0 4px 32px rgba(0,0,0,.08);
+  transition: all .3s; position: relative; overflow: hidden; border: none;
+}
+.dev-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+}
+.dev-card.sami::before   { background: linear-gradient(90deg,#1a56db,#7c3aed); }
+.dev-card.rehman::before { background: linear-gradient(90deg,#10b981,#0ea472); }
+.dev-card:hover { transform: translateY(-8px); box-shadow: 0 16px 56px rgba(0,0,0,.13); }
+.dev-photo-wrap {
+  position: relative; display: inline-block; margin-bottom: 1.25rem;
+}
+.dev-photo {
+  width: 120px; height: 120px; border-radius: 50%; object-fit: cover;
+  border: 4px solid transparent;
+  background: linear-gradient(white,white) padding-box,
+              linear-gradient(135deg,#1a56db,#7c3aed) border-box;
+}
+.dev-avatar {
+  width: 120px; height: 120px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.8rem; font-weight: 800; color: #fff;
+  background: linear-gradient(135deg,#10b981,#0ea472);
+  border: 4px solid #10b981;
+}
+.dev-online {
+  position: absolute; bottom: 6px; right: 6px;
+  width: 20px; height: 20px; background: #10b981;
+  border-radius: 50%; border: 3px solid #fff;
+}
+.dev-card h4 { font-weight: 800; font-size: 1.15rem; margin-bottom: .2rem; color: #1a202c; }
+.dev-role     { color: #6b7280; font-size: .875rem; margin-bottom: .2rem; }
+.dev-roll     { color: #9ca3af; font-size: .8rem; margin-bottom: 1.25rem; }
+.dev-skills   { display: flex; flex-wrap: wrap; gap: .4rem; justify-content: center; margin-bottom: 1.5rem; }
+.dev-skill    { border-radius: 20px; padding: .25rem .8rem; font-size: .75rem; font-weight: 600; }
+.skill-blue   { background: #eff6ff; color: #1a56db; }
+.skill-green  { background: #f0fdf4; color: #16a34a; }
+.skill-purple { background: #fdf4ff; color: #9333ea; }
+.skill-yellow { background: #fef9c3; color: #a16207; }
+.skill-red    { background: #fff1f2; color: #e11d48; }
+.dev-links    { display: flex; gap: .75rem; justify-content: center; }
+.dev-link {
+  display: inline-flex; align-items: center; gap: .45rem;
+  border-radius: 10px; padding: .5rem 1.1rem;
+  font-size: .82rem; font-weight: 600; text-decoration: none;
+  transition: all .2s;
+}
+.dev-link:hover { transform: translateY(-2px); }
+.link-github   { background: #1a202c; color: #fff !important; }
+.link-github:hover  { background: #2d3748; }
+.link-linkedin { background: #0077b5; color: #fff !important; }
+.link-linkedin:hover { background: #005885; }
+.link-disabled { background: #e5e7eb; color: #9ca3af !important; cursor: default; }
+.link-disabled:hover { transform: none; }
+</style>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8 text-center">
-        <h1 class="display-4 mb-4">Smart Carpool Scheduler</h1>
-        <p class="lead">Find the perfect carpool match for your college schedule</p>
-        
-        <div class="row mt-5">
-            <div class="col-md-6 mb-4">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">For Drivers</h5>
-                        <p class="card-text">Share your ride, save on costs, and meet new people from your campus.</p>
-                        <a href="{% url 'register' %}" class="btn btn-primary">Sign Up as Driver</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 mb-4">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">For Passengers</h5>
-                        <p class="card-text">Find reliable rides that match your class schedule and location.</p>
-                        <a href="{% url 'register' %}" class="btn btn-primary">Sign Up as Passenger</a>
-                    </div>
-                </div>
-            </div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container hero-content">
+    <div class="row align-items-center">
+      <div class="col-lg-6">
+        <div class="hero-badge"><i class="bi bi-stars"></i> Smart AI-Powered Matching</div>
+        <h1>Find Your Perfect <span>Carpool Match</span> for College</h1>
+        <p>Connect with classmates who share your route and schedule. Save money, reduce traffic, and make new friends.</p>
+        <div class="hero-btns">
+          <a href="{% url 'register' %}" class="btn-hero-primary">
+            <i class="bi bi-rocket-takeoff me-2"></i>Get Started Free
+          </a>
+          <a href="{% url 'login' %}" class="btn-hero-outline">
+            <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+          </a>
         </div>
+        <div class="hero-stats">
+          <div class="stat"><div class="stat-num">100%</div><div class="stat-label">Free to Use</div></div>
+          <div class="stat"><div class="stat-num">Smart</div><div class="stat-label">Schedule Matching</div></div>
+          <div class="stat"><div class="stat-num">Live</div><div class="stat-label">In-App Chat</div></div>
+        </div>
+      </div>
+      <div class="col-lg-5 offset-lg-1 mt-5 mt-lg-0">
+        <div class="row g-4">
+          <div class="col-12">
+            <div class="role-card driver">
+              <div class="role-icon"><i class="bi bi-car-front-fill"></i></div>
+              <h3>For Drivers</h3>
+              <p>Share your ride, offset fuel costs, and help fellow students get to class on time.</p>
+              <ul class="role-features">
+                <li><i class="bi bi-check-circle-fill"></i> Set your weekly schedule</li>
+                <li><i class="bi bi-check-circle-fill"></i> Auto-matched with nearby passengers</li>
+                <li><i class="bi bi-check-circle-fill"></i> Chat directly before confirming</li>
+              </ul>
+              <a href="{% url 'register' %}" class="btn btn-driver w-100 rounded-3 py-2">
+                <i class="bi bi-car-front me-2"></i>Sign Up as Driver
+              </a>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="role-card passenger">
+              <div class="role-icon"><i class="bi bi-person-walking"></i></div>
+              <h3>For Passengers</h3>
+              <p>Find reliable rides that perfectly match your class schedule and pickup location.</p>
+              <ul class="role-features">
+                <li><i class="bi bi-check-circle-fill"></i> Browse matching drivers</li>
+                <li><i class="bi bi-check-circle-fill"></i> Flexible time window support</li>
+                <li><i class="bi bi-check-circle-fill"></i> Accept or reject matches</li>
+              </ul>
+              <a href="{% url 'register' %}" class="btn btn-passenger w-100 rounded-3 py-2">
+                <i class="bi bi-person-plus me-2"></i>Sign Up as Passenger
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-</div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how-section">
+  <div class="container">
+    <div class="section-heading">
+      <h2>How CarpoolSync Works</h2>
+      <p>Three simple steps to find your perfect carpool partner</p>
+    </div>
+    <div class="row align-items-start justify-content-center">
+      <div class="col-md-3">
+        <div class="step-card">
+          <div class="step-num">1</div>
+          <h5>Create Your Profile</h5>
+          <p>Sign up and set up your vehicle details or passenger preferences.</p>
+        </div>
+      </div>
+      <div class="col-md-1 d-none d-md-flex step-connector"><i class="bi bi-arrow-right"></i></div>
+      <div class="col-md-3">
+        <div class="step-card">
+          <div class="step-num">2</div>
+          <h5>Add Your Schedule</h5>
+          <p>Enter your weekly class schedule with origin, destination and preferred times.</p>
+        </div>
+      </div>
+      <div class="col-md-1 d-none d-md-flex step-connector"><i class="bi bi-arrow-right"></i></div>
+      <div class="col-md-3">
+        <div class="step-card">
+          <div class="step-num">3</div>
+          <h5>Get Matched & Chat</h5>
+          <p>Our algorithm finds the best matches. Accept and chat with your carpool partner.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MAP -->
+<section class="map-section">
+  <div class="container">
+    <div class="section-heading">
+      <h2><i class="bi bi-geo-alt-fill text-primary me-2"></i>See Routes Near Your College</h2>
+      <p>Visualize carpool routes near MJ College, Hyderabad</p>
+    </div>
+    <div id="homeMap"></div>
+  </div>
+</section>
+
+<!-- DEVELOPERS -->
+<section class="dev-section">
+  <div class="container">
+    <div class="section-heading">
+      <h2>👨‍💻 Meet the Developers</h2>
+      <p>The team behind CarpoolSync — MJ College, Hyderabad</p>
+    </div>
+    <div class="row justify-content-center g-4">
+
+      <!-- Sami -->
+      <div class="col-md-5 col-lg-4">
+        <div class="dev-card sami">
+          <div class="dev-photo-wrap">
+            <img src="{% static 'img/sami.jpg' %}"
+                 alt="Mohammed Abdus Sami"
+                 class="dev-photo"
+                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <div class="dev-avatar" style="display:none;">S</div>
+            <div class="dev-online"></div>
+          </div>
+          <h4>Mohammed Abdus Sami</h4>
+          <div class="dev-role"><i class="bi bi-code-slash me-1 text-primary"></i>Full Stack Developer</div>
+          <div class="dev-roll">Roll No: 160422733078</div>
+          <div class="dev-skills">
+            <span class="dev-skill skill-blue">Python</span>
+            <span class="dev-skill skill-blue">Django</span>
+            <span class="dev-skill skill-green">JavaScript</span>
+            <span class="dev-skill skill-purple">Bootstrap</span>
+            <span class="dev-skill skill-yellow">SQLite</span>
+          </div>
+          <div class="dev-links">
+            <a href="https://github.com/mohammed-abdussami"
+               target="_blank" class="dev-link link-github">
+              <i class="bi bi-github"></i> GitHub
+            </a>
+            <a href="https://www.linkedin.com/in/mohammed-abdus-sami-1195b42a6"
+               target="_blank" class="dev-link link-linkedin">
+              <i class="bi bi-linkedin"></i> LinkedIn
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rehman -->
+      <div class="col-md-5 col-lg-4">
+        <div class="dev-card rehman">
+          <div class="dev-photo-wrap">
+            <div class="dev-avatar">A</div>
+            <div class="dev-online" style="background:#10b981"></div>
+          </div>
+          <h4>Abdul Rahman</h4>
+          <div class="dev-role"><i class="bi bi-server me-1 text-success"></i>Backend Developer</div>
+          <div class="dev-roll">Roll No: 160422733120</div>
+          <div class="dev-skills">
+            <span class="dev-skill skill-blue">Python</span>
+            <span class="dev-skill skill-blue">Django</span>
+            <span class="dev-skill skill-yellow">SQLite</span>
+            <span class="dev-skill skill-red">REST API</span>
+            <span class="dev-skill skill-green">Git</span>
+          </div>
+          <div class="dev-links">
+            <a href="https://github.com/Rehman-12-acer"
+               target="_blank" class="dev-link link-github">
+              <i class="bi bi-github"></i> GitHub
+            </a>
+            <span class="dev-link link-disabled">
+              <i class="bi bi-linkedin"></i> LinkedIn
+            </span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const map = L.map('homeMap').setView([17.3850, 78.4867], 13);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  maxZoom: 19
+}).addTo(map);
+
+const collegeIcon = L.divIcon({
+  className: '',
+  html: '<div style="background:linear-gradient(135deg,#1a56db,#7c3aed);color:#fff;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 8px rgba(0,0,0,.3)">🎓</div>',
+  iconSize: [38,38], iconAnchor: [19,38]
+});
+const riderIcon = L.divIcon({
+  className: '',
+  html: '<div style="background:linear-gradient(135deg,#10b981,#0ea472);color:#fff;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 2px 8px rgba(0,0,0,.25)">🚗</div>',
+  iconSize: [32,32], iconAnchor: [16,32]
+});
+
+L.marker([17.3850, 78.4867], {icon: collegeIcon})
+  .addTo(map).bindPopup('<b>MJ College</b><br>Destination').openPopup();
+
+[
+  { lat:17.4100, lng:78.4700, name:'Rider from Secunderabad' },
+  { lat:17.3620, lng:78.5100, name:'Rider from LB Nagar' },
+  { lat:17.4200, lng:78.5050, name:'Rider from Uppal' },
+  { lat:17.3700, lng:78.4500, name:'Rider from Mehdipatnam' },
+].forEach(r => {
+  L.marker([r.lat, r.lng], {icon: riderIcon}).addTo(map).bindPopup(`<b>${r.name}</b>`);
+  L.polyline([[r.lat,r.lng],[17.3850,78.4867]],
+    {color:'#1a56db', weight:2.5, opacity:.5, dashArray:'6,8'}).addTo(map);
+});
+</script>
 {% endblock %}

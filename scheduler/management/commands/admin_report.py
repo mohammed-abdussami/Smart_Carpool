@@ -1,33 +1,15 @@
 from django.core.management.base import BaseCommand
-from django.core.mail import mail_admins
-from django.contrib.auth.models import User
-from django.utils import timezone
+from django.contrib.auth import get_user_model
 from datetime import datetime, timedelta
 
+User = get_user_model()
+
 class Command(BaseCommand):
-    help = 'Sends daily admin report'
+    help = 'Prints a basic user summary to console'
 
     def handle(self, *args, **options):
-        # Calculate time range
+        total = User.objects.count()
         yesterday = datetime.now() - timedelta(days=1)
-        
-        # Get stats
         new_users = User.objects.filter(date_joined__gte=yesterday)
-        total_users = User.objects.count()
-        
-        # Prepare email
-        subject = f'Daily Report - {datetime.now().strftime("%Y-%m-%d")}'
-        message = f'''
-        Daily Activity Report:
-        
-        New Registrations (last 24h): {new_users.count()}
-        Total Users: {User.objects.count()}
-        
-        New Users:
-        {", ".join([f"{u.username} ({u.email})" for u in new_users])}
-        '''
-        
-        # Send email
-        mail_admins(subject, message)
-        self.stdout.write(self.style.SUCCESS('Successfully sent daily report'))
-    
+        self.stdout.write(self.style.SUCCESS(f'Total users: {total}'))
+        self.stdout.write(self.style.SUCCESS(f'New in last 24h: {new_users.count()}'))
